@@ -2,7 +2,7 @@ package routes
 
 import (
 	"sample_server/db"
-
+	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
@@ -36,19 +36,30 @@ func getComponents(c *gin.Context) {
 	session := db.Driver.NewSession(c, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(c)
 
-	results, err := session.ExecuteWrite(c, func(tx neo4j.ManagedTransaction) (interface{}, error){
-		records, err := tx.Run(c, db.QueryComponents, nil)
+	result, err := session.ExecuteWrite(c, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		records, err := tx.Run(c, db.TempQuery, nil)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
 			return nil, err
 		}
-		return records, err
+		var components interface{} = []interface{}{}
+
+		if records.Next(c) {
+			rec := records.Record()
+			if v, ok := rec.Get("components"); ok {
+				components = v
+			} 
+		} else if err := records.Err(); err != nil {
+			return nil, err
+		}
+		return components, nil
 	})
+
+	
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return 
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	c.JSON(200, results)
+	c.JSON(http.StatusOK, result)
 }
 
 

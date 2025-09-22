@@ -26,9 +26,9 @@ def run_batch_write(query: str, rows: List[Dict], batch_size: int = 500):
 # Cypher Query for 2-column CSV (query_refid -> probe_refid)
 CYPHER_CSV_TXNS = """
 UNWIND $rows AS row
-MERGE (q:Query {id: row.query_refid})
-MERGE (p:Probe {id: row.probe_refid})
-MERGE (q)-[:TARGETS]->(p)
+MERGE (q:Person {id: row.query_refid, weight: 1})
+MERGE (p:Person {id: row.probe_refid, weight: 1})
+MERGE (q)-[:MATCHES]->(p)
 """
 
 
@@ -73,8 +73,8 @@ def read_csv_to_rows(path: str) -> List[Dict]:
 CONSTRAINTS = """
 // Note: For Neo4j 4.x+ this will create constraints if they don't exist.
 // If your Neo4j version is older/different, you can remove or adapt these lines.
-CREATE CONSTRAINT IF NOT EXISTS FOR (q:Query) REQUIRE q.id IS UNIQUE;
-CREATE CONSTRAINT IF NOT EXISTS FOR (p:Probe) REQUIRE p.id IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS FOR (q:Person) REQUIRE q.id IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE;
 """
 
 
