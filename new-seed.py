@@ -15,7 +15,7 @@ driver = GraphDatabase.driver(URI, auth=(USER, PWD))
 def run_batch_write(query: str, rows: List[Dict], batch_size: int = 500):
     """
     Executes a write query in batches. Each batch is passed in as parameter 'rows'.
-    Query should UNWIND $rows AS row and operate on row.query_id / row.probe_id.
+    Query should UNWIND $rows AS row and operate on row.query_refid / row.probe_refid.
     """
     with driver.session(database=DB) as session:
         for i in range(0, len(rows), batch_size):
@@ -23,11 +23,11 @@ def run_batch_write(query: str, rows: List[Dict], batch_size: int = 500):
             session.execute_write(lambda tx: tx.run(query, {"rows": batch}).consume())
 
 
-# Cypher Query for 2-column CSV (query_id -> probe_id)
+# Cypher Query for 2-column CSV (query_refid -> probe_refid)
 CYPHER_CSV_TXNS = """
 UNWIND $rows AS row
-MERGE (q:Query {id: row.query_id})
-MERGE (p:Probe {id: row.probe_id})
+MERGE (q:Query {id: row.query_refid})
+MERGE (p:Probe {id: row.probe_refid})
 MERGE (q)-[:TARGETS]->(p)
 """
 
@@ -35,7 +35,7 @@ MERGE (q)-[:TARGETS]->(p)
 # Load CSV and convert to dict rows
 def read_csv_to_rows(path: str) -> List[Dict]:
     """
-    Expects a CSV with two columns: query_id and probe_id (case-insensitive).
+    Expects a CSV with two columns: query_refid and probe_id (case-insensitive).
     Returns list of dicts: {"query_id": ..., "probe_id": ...}
     """
     df = pd.read_csv(path)
@@ -44,13 +44,13 @@ def read_csv_to_rows(path: str) -> List[Dict]:
 
     # determine column names (allow some common variants)
     # prefer exact 'query_id' and 'probe_id' but fall back to first two columns
-    if "query_id" in df.columns and "probe_id" in df.columns:
-        q_col = "query_id"
-        p_col = "probe_id"
+    if "query_refid" in df.columns and "probe_refid" in df.columns:
+        q_col = "query_refid"
+        p_col = "probe_refid"
     else:
         # fallback: use the first two columns as query / probe
         if len(df.columns) < 2:
-            raise ValueError("CSV must contain at least two columns (query_id, probe_id).")
+            raise ValueError("CSV must contain at least two columns (query_refid, probe_refid).")
         q_col, p_col = df.columns[0], df.columns[1]
 
     rows = []
@@ -62,8 +62,8 @@ def read_csv_to_rows(path: str) -> List[Dict]:
             continue
         rows.append(
             {
-                "query_id": str(qv).strip(),
-                "probe_id": str(pv).strip(),
+                "query_refid": str(qv).strip(),
+                "probe_refid": str(pv).strip(),
             }
         )
     return rows
@@ -86,7 +86,7 @@ def ensure_constraints():
 
 # Main function
 def main():
-    csv_path = "queries_probes.csv"  # update filename if needed
+    csv_path = "dedup.csv"  # update filename if needed
 
     print(f"Reading data from {csv_path} ...")
     rows = read_csv_to_rows(csv_path)
