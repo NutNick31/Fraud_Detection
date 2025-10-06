@@ -24,3 +24,5 @@ const (
 	WORKS_ON_REL      = "WORKS_ON"      // (Operator)-[:WORKS_ON]->(Machine)
 	CONNECTED_TO_REL  = "CONNECTED_TO"  // (Operator)-[:CONNECTED_TO {freq:n}]->(Person)
 )
+
+

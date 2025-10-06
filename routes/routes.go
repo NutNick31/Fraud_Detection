@@ -10,7 +10,8 @@ import (
 func RegisterRoutes(r *gin.Engine) {
 	
 	r.DELETE("/reset", resetDatabase)
-	r.GET("/components", getComponents)
+	r.GET("/components", getAllComponents)
+	r.GET("/components/:id", getComponents)
 }
 
 func resetDatabase(c *gin.Context) {
@@ -36,8 +37,47 @@ func getComponents(c *gin.Context) {
 	session := db.Driver.NewSession(c, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(c)
 
+	id := c.Param("id")
+	params := map[string]any{
+		"nodeIdStr": id,
+	}
 	result, err := session.ExecuteWrite(c, func(tx neo4j.ManagedTransaction) (interface{}, error) {
-		records, err := tx.Run(c, db.TempQuery, nil)
+		records, err := tx.Run(c, db.QueryComponentsId, params)
+		if err != nil {
+			return nil, err
+		}
+		var components interface{} = []interface{}{}
+
+		if records.Next(c) {
+			rec := records.Record()
+			if v, ok := rec.Get("result"); ok {
+				components = v
+			} 
+		} else if err := records.Err(); err != nil {
+			return nil, err
+		}
+		return components, nil
+	})
+
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func getAllComponents(c *gin.Context) {
+
+	session := db.Driver.NewSession(c, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close(c)
+
+	id := c.Param("id")
+	params := map[string]any{
+		"nodeIdStr": id,
+	}
+	result, err := session.ExecuteWrite(c, func(tx neo4j.ManagedTransaction) (interface{}, error) {
+		records, err := tx.Run(c, db.TempQuery, params)
 		if err != nil {
 			return nil, err
 		}
@@ -61,5 +101,4 @@ func getComponents(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, result)
 }
-
 

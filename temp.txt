@@ -1,0 +1,40 @@
+Edit the component 
+So we have some new type of nodes and relationships
+So the already existing ones are ref nodes.
+Now we will have 
+ref - [belongs_to] -> uid
+ref - [matches] -> ref
+ref - [operated_by] -> operator
+operator <- [belongs_to] - uid
+
+only the matches will have the 13 instead of 12 props and others dont have any props
+13 props :
+face_score
+left_index_score
+left_little_score,
+left_middle_score
+left_ring_score
+right_index_score
+right_little_score
+right_middle_score
+right_ring_score
+left_thumb_score
+right_thumb_score
+left_iris_score
+right_iris_score
+
+Now we have to make a filter pop menu where we can select following:
+1. Which of these props to consider for degree calculation.
+2. Threshold for each prop above which only the prop will be considered
+3. Dont render the relationships which dont have a single prop to sstisfy above conditions
+
+For degree calculation of each node:
+ref => total "matches" relationships which are rendered
+uid => total connected ref nodes with degree > 0
+operator => total connected refs with degree > 0
+
+Now the graph will render automatically when i apply the filters and then that filter pop menu will have a rerender button to render again according to new rules.
+
+For the filter we can use an array of these 13 and their threshold set to zero by default and then the filter menu will have option to type threshold for each prop.
+
+
