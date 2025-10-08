@@ -99,4 +99,18 @@ WITH subNodes, compRels, collect(DISTINCT { id: m.id, labels: labels(m) /*, prop
 // return same shape as you originally had
 RETURN { component: { nodes: allNodes, relationships: compRels } } AS result;
 `
+
+ComponentIndegreeQuery = `
+    MATCH (n)
+    OPTIONAL MATCH (m)-[r]->(n)
+    WITH n, count(r) AS indegree
+    WHERE indegree >= $min
+    RETURN id(n)         AS node_internal_id,
+          labels(n)     AS labels,
+          properties(n) AS props,
+          indegree
+    ORDER BY indegree DESC;
+
+`
+
 )

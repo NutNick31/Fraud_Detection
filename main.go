@@ -23,7 +23,7 @@ func main() {
 	// 	log.Println("No .env file found, relying on environment variables")
 	// }
 
-	NEO4J_URI := "neo4j://host.docker.internal:7687"
+	NEO4J_URI := "neo4j://10.121.195.176:7687"
 	NEO4J_USER := "neo4j"
 	NEO4J_PASSWORD:="sample-db-password"
 	// NEO4J_DB := "neo4j"
